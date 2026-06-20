@@ -301,7 +301,6 @@ Backend должен:
 - отдавать статические файлы из папки `dist`;
 - для неизвестных frontend route возвращать `index.html`;
 - поддерживать CORS для API;
-- отдавать `GET /api/health` с JSON `{ "ok": true, "databaseConfigured": boolean, "databaseEnv": string | null }`;
 - создавать таблицу `app_counter`, если она еще не существует.
 
 SQL-схема:

@@ -6,12 +6,7 @@ import postgres from "postgres";
 const PORT = Number(process.env.PORT || 3000);
 const COUNTER_ID = "main";
 const root = dirname(resolve(process.argv[1] || "."));
-const databaseEnvName = process.env.DATABASE_URL
-  ? "DATABASE_URL"
-  : process.env.SUPABASE_DATABASE_URL
-    ? "SUPABASE_DATABASE_URL"
-    : null;
-const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL;
+const databaseUrl = process.env.DATABASE_URL;
 const needsSsl =
   Boolean(databaseUrl) &&
   (databaseUrl.includes("supabase.co") ||
@@ -47,16 +42,9 @@ const sendJson = (res, statusCode, data) => {
   res.end(JSON.stringify(data));
 };
 
-const getSafeErrorDetails = (error) => ({
-  code: error?.code || null,
-  message: error instanceof Error ? error.message : "Unknown error",
-});
-
 const ensureDatabase = async () => {
   if (!sql) {
-    const error = new Error("DATABASE_URL is missing");
-    error.code = "DATABASE_NOT_CONFIGURED";
-    throw error;
+    throw new Error("DATABASE_URL is missing");
   }
 
   await sql`
@@ -126,21 +114,6 @@ const handleApi = async (req, res, pathname) => {
   }
 
   try {
-    if (pathname === "/api/health") {
-      if (req.method !== "GET") {
-        sendJson(res, 405, { error: "Method not allowed" });
-        return;
-      }
-
-      sendJson(res, 200, {
-        ok: true,
-        databaseConfigured: Boolean(databaseUrl),
-        databaseEnv: databaseEnvName,
-        ssl: needsSsl,
-      });
-      return;
-    }
-
     if (pathname === "/api/counter") {
       if (req.method !== "GET") {
         sendJson(res, 405, { error: "Method not allowed" });
@@ -171,16 +144,7 @@ const handleApi = async (req, res, pathname) => {
     sendJson(res, 200, { value: await updateCounter(operation) });
   } catch (error) {
     console.error("[counter-api]", error);
-
-    if (error?.code === "DATABASE_NOT_CONFIGURED") {
-      sendJson(res, 500, { error: "DATABASE_URL is missing" });
-      return;
-    }
-
-    sendJson(res, 500, {
-      error: "Failed to handle counter request",
-      details: getSafeErrorDetails(error),
-    });
+    sendJson(res, 500, { error: "Failed to handle counter request" });
   }
 };
 
