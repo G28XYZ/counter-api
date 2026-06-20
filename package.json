@@ -1,0 +1,19 @@
+{
+  "name": "counter-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "latest"
+  },
+  "devDependencies": {
+    "vercel": "^54.14.2"
+  }
+}

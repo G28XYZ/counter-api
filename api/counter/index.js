@@ -1,0 +1,29 @@
+import { sql, COUNTER_ID, cors } from "../../lib/db.js";
+
+export default async function handler(req, res) {
+  cors(res);
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    const rows = await sql`
+      SELECT value
+      FROM app_counter
+      WHERE id = ${COUNTER_ID}
+    `;
+
+    return res.status(200).json({
+      value: rows[0]?.value ?? 0,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to get counter",
+    });
+  }
+}
