@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css">
+    <title>Local-first Counter</title>
+  </head>
+
+  <body>
+    <main>
+      <h1>Local-first Counter</h1>
+      <p class="lead">
+        Счётчик обновляется локально сразу, сохраняется в браузере и
+        синхронизируется с API при открытии страницы.
+      </p>
+
+      <section class="counter" aria-label="Счётчик">
+        <div>
+          <div class="count" id="count">0</div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="increment" type="button">+1</button>
+          <button id="decrement" type="button">-1</button>
+          <button class="danger" id="reset" type="button">Сброс</button>
+        </div>
+      </section>
+
+      <section class="meta" aria-label="Состояние приложения">
+        <div class="status" id="network-status">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="network-label">Онлайн</span>
+        </div>
+        <div id="updated-at">Изменений пока нет</div>
+        <div class="sync">
+          <div class="sync-row">
+            <div>
+              Серверное значение:
+              <strong id="remote-count">нет ответа</strong>
+            </div>
+          </div>
+          <div id="sync-status">Сетевой запрос ещё не выполнялся</div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./counter.js"></script>
+  </body>
+</html>

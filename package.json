@@ -8,7 +8,8 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "dev": "vercel dev"
+    "dev": "vercel dev",
+		"prod": "npx vercel --prod"
   },
   "dependencies": {
     "@neondatabase/serverless": "latest"
