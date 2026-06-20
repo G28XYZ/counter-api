@@ -1,16 +1,15 @@
 # ТЗ: Local-first Counter
 
-Нужно реализовать приложение `Local-first Counter`: простой счетчик с frontend-интерфейсом, local-first поведением, очередью офлайн-операций и serverless API на Netlify + Supabase Postgres.
+Нужно реализовать приложение `Local-first Counter` для деплоя в app.onreza.ru: frontend + Node backend process.
 
 ## Стек
 
 - Node.js project с `"type": "module"`.
 - Frontend: чистый HTML/CSS/JS без фреймворков.
+- Backend: Node HTTP server без фреймворков.
 - Хранение локального состояния: IndexedDB через `idb-keyval`.
-- Backend: Netlify Functions.
-- Database: Supabase Postgres через `postgres`.
-- Dev command: `netlify dev`.
-- Prod deploy: через Netlify Dashboard или `netlify deploy --prod`.
+- Деплой: app.onreza.ru.
+- База данных: Supabase Postgres через `postgres`.
 
 ## Зависимости
 
@@ -21,25 +20,54 @@
 }
 ```
 
-Dev dependency:
+## Скрипты
 
 ```json
 {
-  "netlify-cli": "latest"
+  "build": "node scripts/build.js",
+  "start": "node dist/server.js",
+  "postinstall": "npm run build"
+}
+```
+
+`npm run build` должен:
+
+- удалить старую папку `dist`;
+- скопировать содержимое `public` в `dist`;
+- скопировать `server/server.js` в `dist/server.js`;
+- создать `dist/.onreza/manifest.json`.
+
+Manifest должен явно описывать process-деплой:
+
+```json
+{
+  "version": 1,
+  "layers": [
+    {
+      "name": "app",
+      "target": "PROCESS",
+      "directory": ".",
+      "entry": "server.js"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "^/.*$",
+      "layer": "app",
+      "priority": 0
+    }
+  ],
+  "meta": {
+    "framework": {
+      "name": "node"
+    }
+  }
 }
 ```
 
 ## Структура проекта
 
 ```txt
-lib/
-  db.js
-netlify/
-  functions/
-    counter.js
-    counter-plus.js
-    counter-minus.js
-    counter-reset.js
 public/
   index.html
   style.css
@@ -49,9 +77,29 @@ public/
   vendor/
     idb-keyval.js
     idb-keyval.LICENSE
-netlify.toml
+scripts/
+  build.js
+server/
+  server.js
 package.json
 README.md
+```
+
+Build output:
+
+```txt
+dist/
+  .onreza/
+    manifest.json
+  index.html
+  style.css
+  counter.js
+  dom.js
+  utils.js
+  server.js
+  vendor/
+    idb-keyval.js
+    idb-keyval.LICENSE
 ```
 
 ## Frontend
@@ -219,23 +267,40 @@ local-first-counter:v1
 
 Важно: операция `reset` должна заменять все предыдущие ожидающие операции.
 
-## Синхронизация
+## API contract
 
-API base URL в текущей реализации должен указывать на Netlify-домен проекта:
-
-```txt
-https://{netlify-site-name}.netlify.app
-```
-
-Для локальной разработки можно использовать относительные URL или `http://localhost:{port}`. Внешний контракт API должен оставаться таким же: frontend обращается к `/api/counter...`, а Netlify перенаправляет эти URL на functions.
-
-Эндпоинты:
+Frontend обращается к API по относительным URL:
 
 ```txt
 GET  /api/counter
 POST /api/counter/plus
 POST /api/counter/minus
 POST /api/counter/reset
+```
+
+Backend для этих маршрутов реализуется в `server/server.js` и подключается к Supabase через `SUPABASE_DATABASE_URL`.
+
+Backend должен:
+
+- запускаться командой `node dist/server.js`;
+- слушать порт из `process.env.PORT`, fallback `3000`;
+- отдавать статические файлы из папки `dist`;
+- для неизвестных frontend route возвращать `index.html`;
+- поддерживать CORS для API;
+- создавать таблицу `app_counter`, если она еще не существует.
+
+SQL-схема:
+
+```sql
+CREATE TABLE IF NOT EXISTS app_counter (
+  id text PRIMARY KEY,
+  value integer NOT NULL DEFAULT 0,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO app_counter (id, value)
+VALUES ('main', 0)
+ON CONFLICT (id) DO NOTHING;
 ```
 
 Все запросы должны использовать:
@@ -254,19 +319,9 @@ POST-запросы должны отправляться без body.
 }
 ```
 
-Если HTTP-ответ не `ok`, нужно выбрасывать ошибку:
+Если HTTP-ответ не `ok`, frontend должен считать это ошибкой синхронизации.
 
-```txt
-{actionLabel}: HTTP {status}
-```
-
-Если в JSON нет finite number `value`, нужно выбрасывать ошибку:
-
-```txt
-{actionLabel} вернул ответ без value
-```
-
-### Алгоритм синхронизации
+## Синхронизация
 
 1. Если уже идет синхронизация, новый запуск игнорировать.
 2. Если сеть недоступна, обновить UI в offline-статус и запланировать повтор через `5000ms`.
@@ -329,235 +384,17 @@ local-first-counter
 - перерисовать UI;
 - сохранить состояние без повторной отправки в канал.
 
-## Backend API
-
-Файл `lib/db.js`:
-
-- импортировать `postgres` из `postgres`;
-- требовать env-переменную `SUPABASE_DATABASE_URL`;
-- для совместимости можно поддержать fallback на `DATABASE_URL`;
-- экспортировать `sql`;
-- экспортировать `COUNTER_ID = "main"`;
-- экспортировать `corsHeaders`.
-
-CORS-заголовки:
-
-```txt
-Access-Control-Allow-Origin: *
-Access-Control-Allow-Methods: GET,POST,OPTIONS
-Access-Control-Allow-Headers: Content-Type
-```
-
-Все Netlify Functions должны:
-
-- экспортировать `handler`;
-- читать HTTP-метод из `event.httpMethod`;
-- возвращать объект Netlify response:
-
-```js
-{
-  statusCode: 200,
-  headers: corsHeaders,
-  body: JSON.stringify(data)
-}
-```
-
-- на `OPTIONS` отвечать `200` с пустым `body`;
-- на неподдерживаемый метод отвечать `405`:
-
-```json
-{
-  "error": "Method not allowed"
-}
-```
-
-## Netlify config
-
-Нужен файл `netlify.toml`:
-
-```toml
-[build]
-  publish = "public"
-  functions = "netlify/functions"
-
-[[redirects]]
-  from = "/api/counter"
-  to = "/.netlify/functions/counter"
-  status = 200
-
-[[redirects]]
-  from = "/api/counter/plus"
-  to = "/.netlify/functions/counter-plus"
-  status = 200
-
-[[redirects]]
-  from = "/api/counter/minus"
-  to = "/.netlify/functions/counter-minus"
-  status = 200
-
-[[redirects]]
-  from = "/api/counter/reset"
-  to = "/.netlify/functions/counter-reset"
-  status = 200
-```
-
-### `GET /api/counter`
-
-Файл:
-
-```txt
-netlify/functions/counter.js
-```
-
-Метод: только `GET`.
-
-SQL:
-
-```sql
-SELECT value
-FROM app_counter
-WHERE id = 'main'
-```
-
-Успешный ответ:
-
-```json
-{
-  "value": 0
-}
-```
-
-Если строки нет, вернуть `0`.
-
-При ошибке вернуть `500`:
-
-```json
-{
-  "error": "Failed to get counter"
-}
-```
-
-### `POST /api/counter/plus`
-
-Файл:
-
-```txt
-netlify/functions/counter-plus.js
-```
-
-Метод: только `POST`.
-
-SQL:
-
-```sql
-UPDATE app_counter
-SET value = value + 1, updated_at = now()
-WHERE id = 'main'
-RETURNING value
-```
-
-При ошибке вернуть `500`:
-
-```json
-{
-  "error": "Failed to increment counter"
-}
-```
-
-### `POST /api/counter/minus`
-
-Файл:
-
-```txt
-netlify/functions/counter-minus.js
-```
-
-Метод: только `POST`.
-
-SQL:
-
-```sql
-UPDATE app_counter
-SET value = value - 1, updated_at = now()
-WHERE id = 'main'
-RETURNING value
-```
-
-При ошибке вернуть `500`:
-
-```json
-{
-  "error": "Failed to decrement counter"
-}
-```
-
-### `POST /api/counter/reset`
-
-Файл:
-
-```txt
-netlify/functions/counter-reset.js
-```
-
-Метод: только `POST`.
-
-SQL:
-
-```sql
-UPDATE app_counter
-SET value = 0, updated_at = now()
-WHERE id = 'main'
-RETURNING value
-```
-
-При ошибке вернуть `500`:
-
-```json
-{
-  "error": "Failed to reset counter"
-}
-```
-
-## Database
-
-Нужна таблица Postgres:
-
-```sql
-CREATE TABLE app_counter (
-  id text PRIMARY KEY,
-  value integer NOT NULL DEFAULT 0,
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
-INSERT INTO app_counter (id, value)
-VALUES ('main', 0)
-ON CONFLICT (id) DO NOTHING;
-```
-
-## README
-
-README должен описывать:
-
-- это простой проект со счетчиком;
-- проект доступен по URL;
-- frontend сделан по local-first подходу;
-- для local-first используется `idb-keyval`;
-- при отсутствии сети действия сохраняются в очередь;
-- при восстановлении сети очередь отправляется на API;
-- счетчик умеет показывать значение, увеличивать, уменьшать и сбрасывать;
-- API реализовано в `netlify/functions`, публичные маршруты доступны как `/api/counter`, `/api/counter/plus`, `/api/counter/minus`, `/api/counter/reset`.
-
 ## Критерии приемки
 
-1. При открытии страницы счетчик сразу показывает локальное значение из IndexedDB.
-2. Если локального состояния нет, показывается `0`.
-3. Нажатие `+1`, `-1`, `Сброс` мгновенно меняет UI без ожидания API.
-4. При online-режиме операции отправляются на сервер и очередь очищается.
-5. При offline-режиме операции остаются в очереди и UI продолжает работать.
-6. После возврата online очередь отправляется на сервер по порядку.
-7. `reset` заменяет все предыдущие операции в очереди.
-8. Серверное значение отображается отдельно от локального.
-9. Ошибки синхронизации показываются пользователю.
-10. Несколько вкладок синхронизируют состояние через `BroadcastChannel`.
-11. Все API endpoints возвращают JSON `{ "value": number }` при успехе.
-12. CORS работает для GET, POST и OPTIONS.
+1. `npm install` и `npm run build` создают папку `dist`.
+2. `dist/.onreza/manifest.json` существует и описывает `PROCESS` деплой с entrypoint `server.js`.
+3. При открытии страницы счетчик сразу показывает локальное значение из IndexedDB.
+4. Если локального состояния нет, показывается `0`.
+5. Нажатие `+1`, `-1`, `Сброс` мгновенно меняет UI без ожидания API.
+6. При online-режиме операции отправляются на API и очередь очищается.
+7. При offline-режиме операции остаются в очереди и UI продолжает работать.
+8. После возврата online очередь отправляется на API по порядку.
+9. `reset` заменяет все предыдущие операции в очереди.
+10. Серверное значение отображается отдельно от локального.
+11. Ошибки синхронизации показываются пользователю.
+12. Несколько вкладок синхронизируют состояние через `BroadcastChannel`.

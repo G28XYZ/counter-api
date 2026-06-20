@@ -3,7 +3,7 @@ import { createStore, get, set } from "./vendor/idb-keyval.js";
 export const RETRY_INTERVAL_MS = 5000;
 
 const STATE_KEY = "local-first-counter:v1";
-const API_BASE_URL = "https://storied-bienenstitch-f26825.netlify.app";
+const API_BASE_URL = "";
 const API_ENDPOINTS = {
   current: `${API_BASE_URL}/api/counter`,
   plus: `${API_BASE_URL}/api/counter/plus`,

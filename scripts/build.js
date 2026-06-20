@@ -4,18 +4,20 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const source = resolve(root, "public");
+const serverSource = resolve(root, "server", "server.js");
 const target = resolve(root, "dist");
 
 rmSync(target, { recursive: true, force: true });
 cpSync(source, target, { recursive: true });
+cpSync(serverSource, resolve(target, "server.js"));
 
 const manifest = {
   version: 1,
-  layers: [{ name: "site", target: "STATIC", directory: "." }],
-  routes: [{ pattern: "^/.*$", layer: "site", priority: 0 }],
+  layers: [{ name: "app", target: "PROCESS", directory: ".", entry: "server.js" }],
+  routes: [{ pattern: "^/.*$", layer: "app", priority: 0 }],
   meta: {
     framework: {
-      name: "static",
+      name: "node",
     },
   },
 };

@@ -9,17 +9,11 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.js",
-    "dev": "netlify dev",
-    "postinstall": "npm run build",
-    "prod": "netlify deploy --prod",
-    "prod:vercel": "npx vercel --prod"
+    "start": "node dist/server.js",
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "idb-keyval": "^6.2.5",
     "postgres": "^3.4.7"
-  },
-  "devDependencies": {
-    "netlify-cli": "latest",
-		"vercel": "^54.14.2"
   }
 }
