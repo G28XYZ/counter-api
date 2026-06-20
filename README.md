@@ -31,3 +31,11 @@ npm run build
 
 API реализовано через Netlify Functions в папке `netlify/functions`.
 Публичные API-маршруты сохраняются в формате `/api/counter` через redirects в `netlify.toml`.
+
+Backend подключается к Supabase Postgres через переменную окружения:
+
+```txt
+SUPABASE_DATABASE_URL
+```
+
+Для совместимости также поддерживается старое имя `DATABASE_URL`, но для нового деплоя нужно задавать именно `SUPABASE_DATABASE_URL`.

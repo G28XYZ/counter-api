@@ -15,8 +15,8 @@
     "prod:vercel": "npx vercel --prod"
   },
   "dependencies": {
-    "@neondatabase/serverless": "latest",
-    "idb-keyval": "^6.2.5"
+    "idb-keyval": "^6.2.5",
+    "postgres": "^3.4.7"
   },
   "devDependencies": {
     "netlify-cli": "latest",

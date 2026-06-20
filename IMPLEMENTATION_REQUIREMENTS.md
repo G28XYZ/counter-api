@@ -1,6 +1,6 @@
 # ТЗ: Local-first Counter
 
-Нужно реализовать приложение `Local-first Counter`: простой счетчик с frontend-интерфейсом, local-first поведением, очередью офлайн-операций и serverless API на Netlify + Neon Postgres.
+Нужно реализовать приложение `Local-first Counter`: простой счетчик с frontend-интерфейсом, local-first поведением, очередью офлайн-операций и serverless API на Netlify + Supabase Postgres.
 
 ## Стек
 
@@ -8,7 +8,7 @@
 - Frontend: чистый HTML/CSS/JS без фреймворков.
 - Хранение локального состояния: IndexedDB через `idb-keyval`.
 - Backend: Netlify Functions.
-- Database: Neon Postgres через `@neondatabase/serverless`.
+- Database: Supabase Postgres через `postgres`.
 - Dev command: `netlify dev`.
 - Prod deploy: через Netlify Dashboard или `netlify deploy --prod`.
 
@@ -16,8 +16,8 @@
 
 ```json
 {
-  "@neondatabase/serverless": "latest",
-  "idb-keyval": "^6.2.5"
+  "idb-keyval": "^6.2.5",
+  "postgres": "^3.4.7"
 }
 ```
 
@@ -333,8 +333,9 @@ local-first-counter
 
 Файл `lib/db.js`:
 
-- импортировать `neon` из `@neondatabase/serverless`;
-- требовать env-переменную `DATABASE_URL`;
+- импортировать `postgres` из `postgres`;
+- требовать env-переменную `SUPABASE_DATABASE_URL`;
+- для совместимости можно поддержать fallback на `DATABASE_URL`;
 - экспортировать `sql`;
 - экспортировать `COUNTER_ID = "main"`;
 - экспортировать `corsHeaders`.
