@@ -7,10 +7,16 @@ const PORT = Number(process.env.PORT || 3000);
 const COUNTER_ID = "main";
 const root = dirname(resolve(process.argv[1] || "."));
 const databaseUrl = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
+const needsSsl =
+  Boolean(databaseUrl) &&
+  (databaseUrl.includes("supabase.co") ||
+    databaseUrl.includes("pooler.supabase.com") ||
+    databaseUrl.includes("sslmode=require"));
 
 const sql = databaseUrl
   ? postgres(databaseUrl, {
       prepare: false,
+      ssl: needsSsl ? "require" : undefined,
     })
   : null;
 
@@ -35,6 +41,11 @@ const sendJson = (res, statusCode, data) => {
   });
   res.end(JSON.stringify(data));
 };
+
+const getSafeErrorDetails = (error) => ({
+  code: error?.code || null,
+  message: error instanceof Error ? error.message : "Unknown error",
+});
 
 const ensureDatabase = async () => {
   if (!sql) {
@@ -119,6 +130,7 @@ const handleApi = async (req, res, pathname) => {
       sendJson(res, 200, {
         ok: true,
         databaseConfigured: Boolean(databaseUrl),
+        ssl: needsSsl,
       });
       return;
     }
@@ -159,7 +171,10 @@ const handleApi = async (req, res, pathname) => {
       return;
     }
 
-    sendJson(res, 500, { error: "Failed to handle counter request" });
+    sendJson(res, 500, {
+      error: "Failed to handle counter request",
+      details: getSafeErrorDetails(error),
+    });
   }
 };
 

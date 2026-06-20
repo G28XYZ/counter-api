@@ -43,3 +43,21 @@ Backend:
 ```txt
 SUPABASE_DATABASE_URL
 ```
+
+Для Supabase лучше использовать connection string через pooler и SSL. После деплоя проверь:
+
+```txt
+GET /api/health
+```
+
+Если backend видит переменную, ответ будет содержать:
+
+```json
+{
+  "ok": true,
+  "databaseConfigured": true,
+  "ssl": true
+}
+```
+
+Если `GET /api/counter` возвращает `500`, смотри поле `details` в JSON-ответе: там будет код и сообщение ошибки подключения или SQL.
