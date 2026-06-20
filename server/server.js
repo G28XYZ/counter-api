@@ -1,12 +1,11 @@
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { dirname, extname, join, normalize, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import postgres from "postgres";
 
 const PORT = Number(process.env.PORT || 3000);
 const COUNTER_ID = "main";
-const root = dirname(fileURLToPath(import.meta.url));
+const root = dirname(resolve(process.argv[1] || "."));
 const databaseUrl = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
 
 const sql = databaseUrl
@@ -39,7 +38,9 @@ const sendJson = (res, statusCode, data) => {
 
 const ensureDatabase = async () => {
   if (!sql) {
-    throw new Error("SUPABASE_DATABASE_URL is missing");
+    const error = new Error("SUPABASE_DATABASE_URL is missing");
+    error.code = "DATABASE_NOT_CONFIGURED";
+    throw error;
   }
 
   await sql`
@@ -109,6 +110,19 @@ const handleApi = async (req, res, pathname) => {
   }
 
   try {
+    if (pathname === "/api/health") {
+      if (req.method !== "GET") {
+        sendJson(res, 405, { error: "Method not allowed" });
+        return;
+      }
+
+      sendJson(res, 200, {
+        ok: true,
+        databaseConfigured: Boolean(databaseUrl),
+      });
+      return;
+    }
+
     if (pathname === "/api/counter") {
       if (req.method !== "GET") {
         sendJson(res, 405, { error: "Method not allowed" });
@@ -137,7 +151,14 @@ const handleApi = async (req, res, pathname) => {
     }
 
     sendJson(res, 200, { value: await updateCounter(operation) });
-  } catch {
+  } catch (error) {
+    console.error("[counter-api]", error);
+
+    if (error?.code === "DATABASE_NOT_CONFIGURED") {
+      sendJson(res, 500, { error: "SUPABASE_DATABASE_URL is missing" });
+      return;
+    }
+
     sendJson(res, 500, { error: "Failed to handle counter request" });
   }
 };

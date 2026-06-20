@@ -4,4 +4,4 @@ output_dirs = ["dist"]
 
 [deploy]
 compute = "process"
-entry = "server.js"
+entry = "server.cjs"

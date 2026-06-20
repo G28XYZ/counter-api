@@ -25,7 +25,7 @@
 ```json
 {
   "build": "node scripts/build.js",
-  "start": "node dist/server.js",
+  "start": "node dist/server.cjs",
   "postinstall": "npm run build"
 }
 ```
@@ -41,14 +41,14 @@ output_dirs = ["dist"]
 
 [deploy]
 compute = "process"
-entry = "server.js"
+entry = "server.cjs"
 ```
 
 `npm run build` должен:
 
 - удалить старую папку `dist`;
 - скопировать содержимое `public` в `dist`;
-- собрать `server/server.js` через `esbuild` в `dist/server.js`;
+- собрать `server/server.js` через `esbuild` в `dist/server.cjs`;
 - создать `dist/.onreza/manifest.json`.
 
 Manifest должен явно описывать process-деплой:
@@ -61,7 +61,7 @@ Manifest должен явно описывать process-деплой:
       "name": "app",
       "target": "COMPUTE",
       "directory": ".",
-      "entry": "server.js"
+      "entry": "server.cjs"
     }
   ],
   "routes": [
@@ -94,7 +94,7 @@ public/
 scripts/
   build.js
 server/
-  server.js
+  server.cjs
 package.json
 README.md
 ```
@@ -110,7 +110,7 @@ dist/
   counter.js
   dom.js
   utils.js
-  server.js
+  server.cjs
   vendor/
     idb-keyval.js
     idb-keyval.LICENSE
@@ -296,11 +296,12 @@ Backend для этих маршрутов реализуется в `server/ser
 
 Backend должен:
 
-- запускаться командой `node dist/server.js`;
+- запускаться командой `node dist/server.cjs`;
 - слушать порт из `process.env.PORT`, fallback `3000`;
 - отдавать статические файлы из папки `dist`;
 - для неизвестных frontend route возвращать `index.html`;
 - поддерживать CORS для API;
+- отдавать `GET /api/health` с JSON `{ "ok": true, "databaseConfigured": boolean }`;
 - создавать таблицу `app_counter`, если она еще не существует.
 
 SQL-схема:
@@ -401,7 +402,7 @@ local-first-counter
 ## Критерии приемки
 
 1. `npm install` и `npm run build` создают папку `dist`.
-2. `dist/.onreza/manifest.json` существует и описывает `COMPUTE` слой с entrypoint `server.js`.
+2. `dist/.onreza/manifest.json` существует и описывает `COMPUTE` слой с entrypoint `server.cjs`.
 3. При открытии страницы счетчик сразу показывает локальное значение из IndexedDB.
 4. Если локального состояния нет, показывается `0`.
 5. Нажатие `+1`, `-1`, `Сброс` мгновенно меняет UI без ожидания API.

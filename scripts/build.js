@@ -16,14 +16,14 @@ await build({
   bundle: true,
   platform: "node",
   target: "node20",
-  format: "esm",
-  outfile: resolve(target, "server.js"),
+  format: "cjs",
+  outfile: resolve(target, "server.cjs"),
   packages: "bundle",
 });
 
 const manifest = {
   version: 1,
-  layers: [{ name: "app", target: "COMPUTE", directory: ".", entry: "server.js" }],
+  layers: [{ name: "app", target: "COMPUTE", directory: ".", entry: "server.cjs" }],
   routes: [{ pattern: "^/.*$", layer: "app", priority: 0 }],
   meta: {
     framework: {
