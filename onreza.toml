@@ -1,0 +1,7 @@
+[build]
+command = "npm run build"
+output_dirs = ["dist"]
+
+[deploy]
+compute = "process"
+entry = "server.js"

@@ -30,11 +30,25 @@
 }
 ```
 
+## Onreza config
+
+В корне должен быть `onreza.toml`:
+
+```toml
+[build]
+command = "npm run build"
+output_dirs = ["dist"]
+
+[deploy]
+compute = "process"
+entry = "server.js"
+```
+
 `npm run build` должен:
 
 - удалить старую папку `dist`;
 - скопировать содержимое `public` в `dist`;
-- скопировать `server/server.js` в `dist/server.js`;
+- собрать `server/server.js` через `esbuild` в `dist/server.js`;
 - создать `dist/.onreza/manifest.json`.
 
 Manifest должен явно описывать process-деплой:
@@ -45,7 +59,7 @@ Manifest должен явно описывать process-деплой:
   "layers": [
     {
       "name": "app",
-      "target": "PROCESS",
+      "target": "COMPUTE",
       "directory": ".",
       "entry": "server.js"
     }
@@ -387,7 +401,7 @@ local-first-counter
 ## Критерии приемки
 
 1. `npm install` и `npm run build` создают папку `dist`.
-2. `dist/.onreza/manifest.json` существует и описывает `PROCESS` деплой с entrypoint `server.js`.
+2. `dist/.onreza/manifest.json` существует и описывает `COMPUTE` слой с entrypoint `server.js`.
 3. При открытии страницы счетчик сразу показывает локальное значение из IndexedDB.
 4. Если локального состояния нет, показывается `0`.
 5. Нажатие `+1`, `-1`, `Сброс` мгновенно меняет UI без ожидания API.

@@ -15,5 +15,8 @@
   "dependencies": {
     "idb-keyval": "^6.2.5",
     "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12"
   }
 }

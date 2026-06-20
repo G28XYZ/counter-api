@@ -13,7 +13,7 @@ npm run build
 ```
 
 Также сборка запускается автоматически после `npm install` через `postinstall`, чтобы app.onreza.ru получил папку `dist` перед проверкой build output.
-Во время сборки также создается `dist/.onreza/manifest.json`, который явно указывает entrypoint `server.js` для `PROCESS` деплоя.
+Во время сборки также создается `dist/.onreza/manifest.json`, который явно указывает `COMPUTE` слой и entrypoint `server.js`.
 
 В проекте есть frontend. Он выполнен по подходу local-first: интерфейс сразу работает локально и синхронизирует значение с API.
 Для local-first используется готовая библиотека `idb-keyval`.
@@ -29,7 +29,7 @@ npm run build
 
 Исходники frontend лежат в папке `public`, build output создается в папке `dist`.
 
-Backend находится в `server/server.js`. Во время сборки он копируется в `dist/server.js`, а `dist/.onreza/manifest.json` указывает Onreza запускать его как `PROCESS`.
+Backend находится в `server/server.js`. Во время сборки он бандлится через `esbuild` в `dist/server.js`, а `dist/.onreza/manifest.json` указывает Onreza запускать его как `COMPUTE`.
 
 Backend:
 
