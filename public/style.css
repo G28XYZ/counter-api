@@ -86,6 +86,12 @@ button:hover {
   border-color: #b8c0cc;
 }
 
+.small {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
 .primary {
   border-color: var(--primary);
   background: var(--primary);
@@ -107,6 +113,13 @@ button:hover {
   margin-top: 20px;
   color: var(--muted);
   font-size: 14px;
+}
+
+.network-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .sync {

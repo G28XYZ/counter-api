@@ -1,3 +1,6 @@
+/**
+ * Finds a required DOM element and fails fast when markup and JS are out of sync.
+ */
 const getElement = (selector) => {
   const element = document.querySelector(selector);
 
@@ -8,6 +11,9 @@ const getElement = (selector) => {
   return element;
 };
 
+/**
+ * DOM references grouped by the part of the UI that uses them.
+ */
 export const dom = {
   counter: {
     value: getElement("#count"),
@@ -18,6 +24,7 @@ export const dom = {
   network: {
     status: getElement("#network-status"),
     label: getElement("#network-label"),
+    toggle: getElement("#toggle-network"),
   },
   sync: {
     updatedAt: getElement("#updated-at"),

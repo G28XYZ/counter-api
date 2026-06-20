@@ -9,10 +9,11 @@
   "type": "module",
   "scripts": {
     "dev": "vercel dev",
-		"prod": "npx vercel --prod"
+    "prod": "npx vercel --prod"
   },
   "dependencies": {
-    "@neondatabase/serverless": "latest"
+    "@neondatabase/serverless": "latest",
+    "idb-keyval": "^6.2.5"
   },
   "devDependencies": {
     "vercel": "^54.14.2"

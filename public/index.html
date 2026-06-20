@@ -11,8 +11,7 @@
     <main>
       <h1>Local-first Counter</h1>
       <p class="lead">
-        Счётчик обновляется локально сразу, сохраняется в браузере и
-        синхронизируется с API при открытии страницы.
+        Счётчик обновляется сразу и синхронизируется с API при открытии страницы.
       </p>
 
       <section class="counter" aria-label="Счётчик">
@@ -27,9 +26,14 @@
       </section>
 
       <section class="meta" aria-label="Состояние приложения">
-        <div class="status" id="network-status">
-          <span class="dot" aria-hidden="true"></span>
-          <span id="network-label">Онлайн</span>
+        <div class="network-row">
+          <div class="status" id="network-status">
+            <span class="dot" aria-hidden="true"></span>
+            <span id="network-label">Онлайн</span>
+          </div>
+          <button class="small" id="toggle-network" type="button">
+            Имитировать offline
+          </button>
         </div>
         <div id="updated-at">Изменений пока нет</div>
         <div class="sync">

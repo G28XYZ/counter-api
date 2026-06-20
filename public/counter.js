@@ -1,6 +1,5 @@
 import {
   RETRY_INTERVAL_MS,
-  STORAGE_KEY,
   enqueueOperation,
   fetchCurrentCounter,
   formatDate,
@@ -16,15 +15,31 @@ const channel =
     ? new BroadcastChannel("local-first-counter")
     : null;
 
-let state = readState();
+let state = await readState();
 let isSyncing = false;
+let isNetworkSimulatedOffline = false;
 let retryTimer = null;
 
+const getIsOnline = () => navigator.onLine && !isNetworkSimulatedOffline;
+
+/**
+ * Updates the visible network status badge.
+ */
 const setNetworkStatus = (isOnline) => {
   dom.network.status.classList.toggle("offline", !isOnline);
-  dom.network.label.textContent = isOnline ? "Онлайн" : "Офлайн";
+  dom.network.label.textContent = isOnline
+    ? "Онлайн"
+    : isNetworkSimulatedOffline
+      ? "Офлайн (тест)"
+      : "Офлайн";
+  dom.network.toggle.textContent = isNetworkSimulatedOffline
+    ? "Вернуть online"
+    : "Имитировать offline";
 };
 
+/**
+ * Builds the sync status text from the current state and sync lifecycle.
+ */
 const getSyncStatusText = () => {
   const queueSize = state.pendingOperations.length;
 
@@ -39,6 +54,9 @@ const getSyncStatusText = () => {
   return "Сетевой запрос ещё не выполнялся";
 };
 
+/**
+ * Renders the current state into the UI.
+ */
 const render = () => {
   dom.counter.value.textContent = state.count;
   dom.sync.updatedAt.textContent = state.updatedAt
@@ -51,16 +69,28 @@ const render = () => {
   dom.page.setTitle(`Счётчик: ${state.count}`);
 };
 
+/**
+ * Updates app state, re-renders the UI, and optionally broadcasts the update to other tabs.
+ */
 const persist = (nextState, shouldBroadcast = true) => {
   state = nextState;
-  saveState(state);
   render();
+  saveState(state).catch((error) => {
+    state = {
+      ...state,
+      syncError: `Ошибка сохранения состояния: ${getErrorMessage(error)}`,
+    };
+    render();
+  });
 
   if (shouldBroadcast && channel) {
     channel.postMessage(state);
   }
 };
 
+/**
+ * Cancels a scheduled retry attempt.
+ */
 const clearSyncRetry = () => {
   if (!retryTimer) return;
 
@@ -68,6 +98,9 @@ const clearSyncRetry = () => {
   retryTimer = null;
 };
 
+/**
+ * Schedules another sync attempt while there are pending local operations.
+ */
 const scheduleSyncRetry = () => {
   clearSyncRetry();
 
@@ -79,6 +112,9 @@ const scheduleSyncRetry = () => {
   }, RETRY_INTERVAL_MS);
 };
 
+/**
+ * Adds a local operation to the sync queue and starts synchronization.
+ */
 const enqueueSync = (operation) => {
   persist({
     ...state,
@@ -88,6 +124,9 @@ const enqueueSync = (operation) => {
   syncPending();
 };
 
+/**
+ * Applies a plus or minus action locally before syncing it with the server.
+ */
 const updateCount = (delta, operation) => {
   persist({
     ...state,
@@ -97,6 +136,9 @@ const updateCount = (delta, operation) => {
   enqueueSync(operation);
 };
 
+/**
+ * Resets the local counter and queues a server reset operation.
+ */
 const resetCount = () => {
   persist({
     ...state,
@@ -106,10 +148,13 @@ const resetCount = () => {
   enqueueSync("reset");
 };
 
+/**
+ * Pulls the current server value when there are no local operations to push.
+ */
 const syncRemoteCounter = async () => {
   const remoteCount = await fetchCurrentCounter();
 
-  setNetworkStatus(true);
+  setNetworkStatus(getIsOnline());
   persist({
     ...state,
     count: state.pendingOperations.length === 0 ? remoteCount : state.count,
@@ -119,6 +164,9 @@ const syncRemoteCounter = async () => {
   });
 };
 
+/**
+ * Pushes the next queued local operation to the server.
+ */
 const syncNextOperation = async () => {
   const [operation] = state.pendingOperations;
   const remoteCount = await sendCounterOperation(operation);
@@ -127,7 +175,7 @@ const syncNextOperation = async () => {
       ? state.pendingOperations.slice(1)
       : state.pendingOperations;
 
-  setNetworkStatus(true);
+  setNetworkStatus(getIsOnline());
   persist({
     ...state,
     count: pendingOperations.length === 0 ? remoteCount : state.count,
@@ -138,10 +186,13 @@ const syncNextOperation = async () => {
   });
 };
 
+/**
+ * Runs the local-first sync loop: pull when idle, push queued operations when needed.
+ */
 const syncPending = async () => {
   if (isSyncing) return;
 
-  if (!navigator.onLine) {
+  if (!getIsOnline()) {
     setNetworkStatus(false);
     scheduleSyncRetry();
     return;
@@ -156,7 +207,7 @@ const syncPending = async () => {
       await syncRemoteCounter();
     }
 
-    while (state.pendingOperations.length > 0 && navigator.onLine) {
+    while (state.pendingOperations.length > 0 && getIsOnline()) {
       await syncNextOperation();
     }
   } catch (error) {
@@ -176,8 +227,11 @@ const syncPending = async () => {
   }
 };
 
+/**
+ * Reacts to browser online/offline events and starts or retries sync.
+ */
 const updateNetworkStatus = () => {
-  const isOnline = navigator.onLine;
+  const isOnline = getIsOnline();
   setNetworkStatus(isOnline);
 
   if (isOnline) {
@@ -187,9 +241,15 @@ const updateNetworkStatus = () => {
   }
 };
 
+const toggleNetworkSimulation = () => {
+  isNetworkSimulatedOffline = !isNetworkSimulatedOffline;
+  updateNetworkStatus();
+};
+
 dom.counter.increment.addEventListener("click", () => updateCount(1, "plus"));
 dom.counter.decrement.addEventListener("click", () => updateCount(-1, "minus"));
 dom.counter.reset.addEventListener("click", resetCount);
+dom.network.toggle.addEventListener("click", toggleNetworkSimulation);
 
 window.addEventListener("online", updateNetworkStatus);
 window.addEventListener("offline", updateNetworkStatus);
@@ -199,12 +259,6 @@ document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
     syncPending();
   }
-});
-window.addEventListener("storage", (event) => {
-  if (event.key !== STORAGE_KEY || !event.newValue) return;
-
-  state = readState();
-  render();
 });
 
 channel?.addEventListener("message", (event) => {
