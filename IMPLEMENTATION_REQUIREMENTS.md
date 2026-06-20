@@ -292,7 +292,7 @@ POST /api/counter/minus
 POST /api/counter/reset
 ```
 
-Backend для этих маршрутов реализуется в `server/server.js` и подключается к Supabase через `SUPABASE_DATABASE_URL`.
+Backend для этих маршрутов реализуется в `server/server.js` и подключается к Supabase через `DATABASE_URL`.
 
 Backend должен:
 
@@ -301,7 +301,7 @@ Backend должен:
 - отдавать статические файлы из папки `dist`;
 - для неизвестных frontend route возвращать `index.html`;
 - поддерживать CORS для API;
-- отдавать `GET /api/health` с JSON `{ "ok": true, "databaseConfigured": boolean }`;
+- отдавать `GET /api/health` с JSON `{ "ok": true, "databaseConfigured": boolean, "databaseEnv": string | null }`;
 - создавать таблицу `app_counter`, если она еще не существует.
 
 SQL-схема:

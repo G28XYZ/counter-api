@@ -35,14 +35,16 @@ Backend:
 
 - отдает статические файлы frontend из `dist`;
 - обслуживает API `/api/health`, `/api/counter`, `/api/counter/plus`, `/api/counter/minus`, `/api/counter/reset`;
-- подключается к Supabase Postgres через `SUPABASE_DATABASE_URL`;
+- подключается к Supabase Postgres через `DATABASE_URL`;
 - создает таблицу `app_counter`, если она еще не существует.
 
 Для деплоя нужно задать env:
 
 ```txt
-SUPABASE_DATABASE_URL
+DATABASE_URL
 ```
+
+`SUPABASE_DATABASE_URL` тоже поддерживается как fallback, но основное имя для Onreza - `DATABASE_URL`.
 
 Для Supabase лучше использовать connection string через pooler и SSL. После деплоя проверь:
 
@@ -56,6 +58,7 @@ GET /api/health
 {
   "ok": true,
   "databaseConfigured": true,
+  "databaseEnv": "DATABASE_URL",
   "ssl": true
 }
 ```

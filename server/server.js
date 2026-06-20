@@ -6,7 +6,12 @@ import postgres from "postgres";
 const PORT = Number(process.env.PORT || 3000);
 const COUNTER_ID = "main";
 const root = dirname(resolve(process.argv[1] || "."));
-const databaseUrl = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
+const databaseEnvName = process.env.DATABASE_URL
+  ? "DATABASE_URL"
+  : process.env.SUPABASE_DATABASE_URL
+    ? "SUPABASE_DATABASE_URL"
+    : null;
+const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL;
 const needsSsl =
   Boolean(databaseUrl) &&
   (databaseUrl.includes("supabase.co") ||
@@ -49,7 +54,7 @@ const getSafeErrorDetails = (error) => ({
 
 const ensureDatabase = async () => {
   if (!sql) {
-    const error = new Error("SUPABASE_DATABASE_URL is missing");
+    const error = new Error("DATABASE_URL is missing");
     error.code = "DATABASE_NOT_CONFIGURED";
     throw error;
   }
@@ -130,6 +135,7 @@ const handleApi = async (req, res, pathname) => {
       sendJson(res, 200, {
         ok: true,
         databaseConfigured: Boolean(databaseUrl),
+        databaseEnv: databaseEnvName,
         ssl: needsSsl,
       });
       return;
@@ -167,7 +173,7 @@ const handleApi = async (req, res, pathname) => {
     console.error("[counter-api]", error);
 
     if (error?.code === "DATABASE_NOT_CONFIGURED") {
-      sendJson(res, 500, { error: "SUPABASE_DATABASE_URL is missing" });
+      sendJson(res, 500, { error: "DATABASE_URL is missing" });
       return;
     }
 
