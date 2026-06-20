@@ -1,5 +1,5 @@
 /**
- * Finds a required DOM element and fails fast when markup and JS are out of sync.
+ * Находит обязательный DOM-элемент и сразу сообщает об ошибке, если разметка и JS не совпадают.
  */
 const getElement = (selector) => {
   const element = document.querySelector(selector);
@@ -12,7 +12,7 @@ const getElement = (selector) => {
 };
 
 /**
- * DOM references grouped by the part of the UI that uses them.
+ * DOM-ссылки, сгруппированные по частям интерфейса.
  */
 export const dom = {
   counter: {

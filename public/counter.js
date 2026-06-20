@@ -23,7 +23,7 @@ let retryTimer = null;
 const getIsOnline = () => navigator.onLine && !isNetworkSimulatedOffline;
 
 /**
- * Updates the visible network status badge.
+ * Обновляет видимый статус сети.
  */
 const setNetworkStatus = (isOnline) => {
   dom.network.status.classList.toggle("offline", !isOnline);
@@ -38,7 +38,7 @@ const setNetworkStatus = (isOnline) => {
 };
 
 /**
- * Builds the sync status text from the current state and sync lifecycle.
+ * Собирает текст статуса синхронизации по текущему состоянию.
  */
 const getSyncStatusText = () => {
   const queueSize = state.pendingOperations.length;
@@ -55,7 +55,7 @@ const getSyncStatusText = () => {
 };
 
 /**
- * Renders the current state into the UI.
+ * Отрисовывает текущее состояние в интерфейсе.
  */
 const render = () => {
   dom.counter.value.textContent = state.count;
@@ -70,7 +70,7 @@ const render = () => {
 };
 
 /**
- * Updates app state, re-renders the UI, and optionally broadcasts the update to other tabs.
+ * Обновляет состояние приложения, перерисовывает UI и при необходимости сообщает другим вкладкам.
  */
 const persist = (nextState, shouldBroadcast = true) => {
   state = nextState;
@@ -89,7 +89,7 @@ const persist = (nextState, shouldBroadcast = true) => {
 };
 
 /**
- * Cancels a scheduled retry attempt.
+ * Отменяет запланированную повторную попытку синхронизации.
  */
 const clearSyncRetry = () => {
   if (!retryTimer) return;
@@ -99,7 +99,7 @@ const clearSyncRetry = () => {
 };
 
 /**
- * Schedules another sync attempt while there are pending local operations.
+ * Планирует повторную синхронизацию, пока есть ожидающие локальные операции.
  */
 const scheduleSyncRetry = () => {
   clearSyncRetry();
@@ -113,7 +113,7 @@ const scheduleSyncRetry = () => {
 };
 
 /**
- * Adds a local operation to the sync queue and starts synchronization.
+ * Добавляет локальную операцию в очередь и запускает синхронизацию.
  */
 const enqueueSync = (operation) => {
   persist({
@@ -125,7 +125,7 @@ const enqueueSync = (operation) => {
 };
 
 /**
- * Applies a plus or minus action locally before syncing it with the server.
+ * Применяет plus или minus локально до синхронизации с сервером.
  */
 const updateCount = (delta, operation) => {
   persist({
@@ -137,7 +137,7 @@ const updateCount = (delta, operation) => {
 };
 
 /**
- * Resets the local counter and queues a server reset operation.
+ * Сбрасывает локальный счетчик и добавляет reset в очередь для сервера.
  */
 const resetCount = () => {
   persist({
@@ -149,7 +149,7 @@ const resetCount = () => {
 };
 
 /**
- * Pulls the current server value when there are no local operations to push.
+ * Забирает значение с сервера, если нет локальных операций для отправки.
  */
 const syncRemoteCounter = async () => {
   const remoteCount = await fetchCurrentCounter();
@@ -165,7 +165,7 @@ const syncRemoteCounter = async () => {
 };
 
 /**
- * Pushes the next queued local operation to the server.
+ * Отправляет следующую локальную операцию из очереди на сервер.
  */
 const syncNextOperation = async () => {
   const [operation] = state.pendingOperations;
@@ -187,7 +187,7 @@ const syncNextOperation = async () => {
 };
 
 /**
- * Runs the local-first sync loop: pull when idle, push queued operations when needed.
+ * Запускает цикл local-first синхронизации: получает значение или отправляет очередь.
  */
 const syncPending = async () => {
   if (isSyncing) return;
@@ -228,7 +228,7 @@ const syncPending = async () => {
 };
 
 /**
- * Reacts to browser online/offline events and starts or retries sync.
+ * Реагирует на события online/offline и запускает или откладывает синхронизацию.
  */
 const updateNetworkStatus = () => {
   const isOnline = getIsOnline();

@@ -3,7 +3,7 @@ import { createStore, get, set } from "./vendor/idb-keyval.js";
 export const RETRY_INTERVAL_MS = 5000;
 
 const STATE_KEY = "local-first-counter:v1";
-const API_BASE_URL = "https://counter-api-nu.vercel.app";
+const API_BASE_URL = "https://storied-bienenstitch-f26825.netlify.app";
 const API_ENDPOINTS = {
   current: `${API_BASE_URL}/api/counter`,
   plus: `${API_BASE_URL}/api/counter/plus`,
@@ -14,7 +14,7 @@ const OPERATIONS = ["plus", "minus", "reset"];
 const counterStore = createStore("local-first-counter", "state");
 
 /**
- * Creates the default local-first state.
+ * Создает начальное состояние local-first.
  */
 export const createInitialState = () => ({
   count: 0,
@@ -26,7 +26,7 @@ export const createInitialState = () => ({
 });
 
 /**
- * Normalizes unsafe or stale state before the UI uses it.
+ * Приводит состояние к безопасному виду перед использованием в UI.
  */
 const normalizeState = (value) => ({
   count: Number.isFinite(value?.count) ? value.count : 0,
@@ -42,7 +42,7 @@ const normalizeState = (value) => ({
 });
 
 /**
- * Reads saved state through idb-keyval.
+ * Читает сохраненное состояние через idb-keyval.
  */
 export const readState = async () => {
   try {
@@ -53,12 +53,12 @@ export const readState = async () => {
 };
 
 /**
- * Persists the current app state through idb-keyval.
+ * Сохраняет текущее состояние приложения через idb-keyval.
  */
 export const saveState = (state) => set(STATE_KEY, state, counterStore);
 
 /**
- * Formats ISO dates for display in the Russian UI.
+ * Форматирует ISO-даты для русского интерфейса.
  */
 export const formatDate = (value) => {
   if (!value) return "Изменений пока нет";
@@ -70,19 +70,19 @@ export const formatDate = (value) => {
 };
 
 /**
- * Converts unknown thrown values into a readable error message.
+ * Преобразует неизвестную ошибку в читаемое сообщение.
  */
 export const getErrorMessage = (error) =>
   error instanceof Error ? error.message : "неизвестная ошибка";
 
 /**
- * Adds an operation to the sync queue; reset replaces earlier pending actions.
+ * Добавляет операцию в очередь синхронизации; reset заменяет прошлые ожидающие действия.
  */
 export const enqueueOperation = (pendingOperations, operation) =>
   operation === "reset" ? ["reset"] : [...pendingOperations, operation];
 
 /**
- * Validates a counter API response and returns its numeric value.
+ * Проверяет ответ API счетчика и возвращает числовое значение.
  */
 const readCounterValue = async (response, actionLabel) => {
   if (!response.ok) {
@@ -98,7 +98,7 @@ const readCounterValue = async (response, actionLabel) => {
 };
 
 /**
- * Loads the current counter value from the server.
+ * Загружает текущее значение счетчика с сервера.
  */
 export const fetchCurrentCounter = async () => {
   const response = await fetch(API_ENDPOINTS.current, { cache: "no-store" });
@@ -106,7 +106,7 @@ export const fetchCurrentCounter = async () => {
 };
 
 /**
- * Sends one queued counter operation to the server and returns the new value.
+ * Отправляет одну операцию из очереди на сервер и возвращает новое значение.
  */
 export const sendCounterOperation = async (operation) => {
   const response = await fetch(API_ENDPOINTS[operation], {

@@ -1,0 +1,23 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/counter"
+  to = "/.netlify/functions/counter"
+  status = 200
+
+[[redirects]]
+  from = "/api/counter/plus"
+  to = "/.netlify/functions/counter-plus"
+  status = 200
+
+[[redirects]]
+  from = "/api/counter/minus"
+  to = "/.netlify/functions/counter-minus"
+  status = 200
+
+[[redirects]]
+  from = "/api/counter/reset"
+  to = "/.netlify/functions/counter-reset"
+  status = 200

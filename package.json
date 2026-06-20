@@ -8,14 +8,16 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "prod": "npx vercel --prod"
+    "dev": "netlify dev",
+    "prod": "netlify deploy --prod",
+    "prod:vercel": "npx vercel --prod"
   },
   "dependencies": {
     "@neondatabase/serverless": "latest",
     "idb-keyval": "^6.2.5"
   },
   "devDependencies": {
-    "vercel": "^54.14.2"
+    "netlify-cli": "latest",
+		"vercel": "^54.14.2"
   }
 }
