@@ -8,7 +8,9 @@
   "description": "",
   "type": "module",
   "scripts": {
+    "build": "node scripts/build.js",
     "dev": "netlify dev",
+    "postinstall": "npm run build",
     "prod": "netlify deploy --prod",
     "prod:vercel": "npx vercel --prod"
   },
